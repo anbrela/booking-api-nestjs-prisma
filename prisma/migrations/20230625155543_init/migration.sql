@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Task" ALTER COLUMN "id" SET DATA TYPE TEXT,
+ADD CONSTRAINT "Task_pkey" PRIMARY KEY ("id");
