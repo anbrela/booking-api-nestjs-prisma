@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { GetTasksFilterDto } from './dto/get-tasks-filter.dto';
-import { Task } from '@prisma/client';
+import { Task, User } from '@prisma/client';
 import { TaskRepository } from './task.repository';
 import { UpdateTaskStatusDto } from './dto/update-task-status.dto';
 
@@ -18,16 +18,12 @@ export class TasksService {
     return foundTask;
   }
 
-  async createTask(createTaskDto: CreateTaskDto): Promise<Task> {
-    return this.taskRepository.saveTask(createTaskDto);
+  async createTask(createTaskDto: CreateTaskDto, user: User): Promise<Task> {
+    return this.taskRepository.saveTask(createTaskDto, user);
   }
 
-  async getAllTasks(): Promise<Task[]> {
-    return this.taskRepository.getAllTasks();
-  }
-
-  async getTasksWithFilters(filterDto: GetTasksFilterDto): Promise<Task[]> {
-    return await this.taskRepository.getTasksWithFilters(filterDto);
+  async getTasks(filterDto: GetTasksFilterDto): Promise<Task[]> {
+    return this.taskRepository.getTasks(filterDto);
   }
 
   deleteTask(id: string): void {

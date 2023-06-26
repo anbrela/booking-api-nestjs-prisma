@@ -16,6 +16,18 @@ model Task {
   title     String
   description String?
   status     String  @default("OPEN")
+  authorId   String
+  author    User?   @relation(fields: [authorId], references: [id])
 }
+
+model User {
+  id        String @default(uuid()) @id @unique
+  name      String
+  email     String @unique
+  password  String
+  createdAt DateTime @default(now())
+  tasks     Task[]
+}
+
 
 
