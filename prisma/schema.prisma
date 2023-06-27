@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,24 +7,63 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-model Task {
-  id        String @default(uuid()) @id @unique
-  title     String
-  description String?
-  status     String  @default("OPEN")
-  authorId   String
-  author    User?   @relation(fields: [authorId], references: [id])
+model Company {
+  id             String                  @id @unique @default(uuid())
+  title          String
+  description    String?
+  status         String                  @default("OPEN")
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime?               @updatedAt
+  availabilities CompanyAvaliabilities[]
+  users          UserCompany[]
 }
 
 model User {
-  id        String @default(uuid()) @id @unique
+  id        String        @id @unique @default(uuid())
   name      String
-  email     String @unique
+  email     String        @unique
   password  String
-  createdAt DateTime @default(now())
-  tasks     Task[]
+  createdAt DateTime      @default(now())
+  companies UserCompany[]
 }
 
+model UserCompany {
+  userId    String
+  companyId String
+  role      String
+  company   Company @relation(fields: [companyId], references: [id])
+  user      User    @relation(fields: [userId], references: [id])
 
+  @@id([userId, companyId])
+}
 
+model Availability {
+  id          String                  @id @unique @default(uuid())
+  companyId   String
+  day         String
+  start       String
+  end         String
+  status      String                  @default("AVALIABLE")
+  appointment Appointment?
+  companies   CompanyAvaliabilities[]
+}
+
+model CompanyAvaliabilities {
+  companyId      String
+  availabilityId String
+  avaliability   Availability @relation(fields: [availabilityId], references: [id])
+  company        Company      @relation(fields: [companyId], references: [id])
+
+  @@id([companyId, availabilityId])
+}
+
+model Appointment {
+  id             String       @id @unique @default(uuid())
+  availabilityId String       @unique
+  customerEmail  String
+  customerNumber String
+  customerPhone  String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime?    @updatedAt
+  avaliability   Availability @relation(fields: [availabilityId], references: [id])
+}

@@ -7,6 +7,14 @@ import { User } from '@prisma/client';
 @Injectable()
 export class AuthRepository {
   constructor(private prisma: PrismaService) {}
+
+  async getAllUsers(): Promise<User[]> {
+    return this.prisma.user.findMany();
+  }
+
+  async findUsers(): Promise<User[]> {
+    return this.prisma.user.findMany();
+  }
   async signUp(registerDto: RegisterDto): Promise<User> {
     return this.prisma.user.create({
       data: registerDto,
@@ -15,6 +23,14 @@ export class AuthRepository {
 
   async findByEmail(email: string): Promise<User> {
     return this.prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+  }
+
+  async deleteUser(email: string): Promise<User> {
+    return this.prisma.user.delete({
       where: {
         email,
       },

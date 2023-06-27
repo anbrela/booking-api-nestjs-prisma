@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   InternalServerErrorException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
 import { AuthRepository } from './auth.repository';
@@ -9,6 +10,9 @@ import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { TokenCookieType } from './get-token.decorator';
+import { setAuthCookies } from './utils';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -16,6 +20,10 @@ export class AuthService {
     private authRepository: AuthRepository,
     private jwt: JwtService,
   ) {}
+
+  async getAllUsers(): Promise<User[]> {
+    return this.authRepository.findUsers();
+  }
   async signUp(registerDto: RegisterDto): Promise<{ accessToken: string }> {
     const { email, password, name } = registerDto;
 
@@ -30,6 +38,8 @@ export class AuthService {
     try {
       const savedUser = await this.authRepository.signUp(registerData);
 
+      console.log('savedUser', savedUser);
+
       const payload: JwtPayload = {
         email: savedUser.email,
         name: savedUser.name,
@@ -39,17 +49,16 @@ export class AuthService {
 
       return { accessToken };
     } catch (error) {
+      console.log('error', error);
       if (error.code === 'P2002') {
         throw new ConflictException('Email already exists');
       } else {
-        console.log('error', error);
-
         throw new InternalServerErrorException('Internal server error');
       }
     }
   }
 
-  async signIn(loginDto: LoginDto) {
+  async signIn(response: any, token: TokenCookieType, loginDto: LoginDto) {
     const { email, password } = loginDto;
 
     const user = await this.authRepository.findByEmail(email);
@@ -69,8 +78,22 @@ export class AuthService {
       name: user.name,
     };
 
-    const accessToken = await this.jwt.sign(payload);
+    setAuthCookies({ payload, response, jwt: this.jwt, isLogin: true });
+  }
 
-    return { accessToken };
+  async refresh(token: string, response) {
+    const payload: JwtPayload = await this.jwt.verify(token);
+    if (!payload) {
+      throw new UnauthorizedException();
+    }
+
+    setAuthCookies({ payload, response, jwt: this.jwt, isLogin: false });
+  }
+
+  async deleteUser(email: string): Promise<void> {
+    const user = await this.authRepository.findByEmail(email);
+    if (!user) throw new ConflictException('Email does not exist');
+
+    await this.authRepository.deleteUser(email);
   }
 }
