@@ -25,6 +25,22 @@ model User {
   password  String
   createdAt DateTime      @default(now())
   companies UserCompany[]
+  roles     UserRoles[] 
+}
+
+model Role {
+  id   String @id @unique @default(uuid())
+  role String
+  users UserRoles[]
+}
+
+model UserRoles {
+  userId String
+  roleId String
+  user   User   @relation(fields: [userId], references: [id])
+  role   Role   @relation(fields: [roleId], references: [id])
+
+  @@id([userId, roleId])
 }
 
 model UserCompany {

@@ -13,6 +13,7 @@ import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { TokenCookieType } from './get-token.decorator';
 import { setAuthCookies } from './utils';
 import { User } from '@prisma/client';
+import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 
 @Injectable()
 export class AuthService {
@@ -38,8 +39,6 @@ export class AuthService {
     try {
       const savedUser = await this.authRepository.signUp(registerData);
 
-      console.log('savedUser', savedUser);
-
       const payload: JwtPayload = {
         email: savedUser.email,
         name: savedUser.name,
@@ -49,7 +48,6 @@ export class AuthService {
 
       return { accessToken };
     } catch (error) {
-      console.log('error', error);
       if (error.code === 'P2002') {
         throw new ConflictException('Email already exists');
       } else {
@@ -90,10 +88,7 @@ export class AuthService {
     setAuthCookies({ payload, response, jwt: this.jwt, isLogin: false });
   }
 
-  async deleteUser(email: string): Promise<void> {
-    const user = await this.authRepository.findByEmail(email);
-    if (!user) throw new ConflictException('Email does not exist');
-
-    await this.authRepository.deleteUser(email);
+  async updateUserRole(id: string, updateUserRoleDto: UpdateUserRoleDto) {
+    return this.authRepository.updateUserRole(id, updateUserRoleDto);
   }
 }
