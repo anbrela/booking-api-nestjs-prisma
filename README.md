@@ -1,7 +1,7 @@
 
 ## Description
 
-This is a simple Api to manage booking appointmenst.
+This is a simple Api to manage booking appointments.
 
 This project is done with: 
 - [Nest](https://github.com/nestjs/nest)
@@ -59,18 +59,6 @@ $ npm run start:dev
 $ npm run start:prod
 ```
 
-## Test
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
 
 ## Support
 
