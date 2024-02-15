@@ -14,6 +14,7 @@ import { TokenCookieType } from './get-token.decorator';
 import { setAuthCookies } from './utils';
 import { User } from '@prisma/client';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
+import { updateProfileDto } from './dto/updateProfile.dto';
 
 @Injectable()
 export class AuthService {
@@ -26,14 +27,13 @@ export class AuthService {
     return this.authRepository.findUsers();
   }
   async signUp(registerDto: RegisterDto): Promise<{ accessToken: string }> {
-    const { email, password, name } = registerDto;
+    const { email, password } = registerDto;
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const registerData = {
       email,
       password: hashedPassword,
-      name,
     };
 
     try {
@@ -53,6 +53,14 @@ export class AuthService {
       } else {
         throw new InternalServerErrorException('Internal server error');
       }
+    }
+  }
+
+  async findUserByEmail(email: string): Promise<void> {
+    const exists = await this.authRepository.findByEmail(email);
+
+    if (!exists) {
+      throw new ConflictException('Email does not exist');
     }
   }
 
@@ -79,6 +87,17 @@ export class AuthService {
     setAuthCookies({ payload, response, jwt: this.jwt, isLogin: true });
   }
 
+  async updateProfile(
+    token: string,
+    profileDto: updateProfileDto,
+  ): Promise<void> {
+    const payload: JwtPayload = await this.jwt.verify(token);
+    if (!payload) {
+      throw new UnauthorizedException();
+    }
+
+    await this.authRepository.updateProfile(payload.email, profileDto);
+  }
   async refresh(token: string, response) {
     const payload: JwtPayload = await this.jwt.verify(token);
     if (!payload) {

@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -7,79 +8,115 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Company {
-  id             String                  @id @unique @default(uuid())
-  title          String
-  description    String?
-  status         String                  @default("OPEN")
-  createdAt      DateTime                @default(now())
-  updatedAt      DateTime?               @updatedAt
-  availabilities CompanyAvaliabilities[]
-  users          UserCompany[]
+model User {
+  id          String        @id @unique @default(uuid())
+  name        String?
+  email       String        @unique
+  password    String
+  createdAt   DateTime      @default(now())
+  city        City?         @relation(fields: [cityId], references: [id])
+  cityId      String?
+  roles       Role[]
+  about       String?
+  avatar      String?
+  isCreator   Boolean       @default(false)
+  earnings    Int           @default(0)
+  gamesPlayed GameSession[]
+  games       Game[]
 }
 
-model User {
-  id        String        @id @unique @default(uuid())
+model Country {
+  id     String @id @unique
+  name   String
+  cities City[]
+}
+
+model City {
+  id        String  @id @unique
   name      String
-  email     String        @unique
-  password  String
-  createdAt DateTime      @default(now())
-  companies UserCompany[]
-  roles     UserRoles[] 
+  latitude  Float
+  longitude Float
+  country   Country @relation(fields: [countryId], references: [id])
+  countryId String
+  games     Game[]
+  users     User[]
 }
 
 model Role {
-  id   String @id @unique @default(uuid())
-  role String
-  users UserRoles[]
+  role  String @id @unique
+  users User[]
 }
 
-model UserRoles {
-  userId String
-  roleId String
-  user   User   @relation(fields: [userId], references: [id])
-  role   Role   @relation(fields: [roleId], references: [id])
-
-  @@id([userId, roleId])
+model Code {
+  id           String        @id @unique @default(uuid())
+  code         String
+  createdAt    DateTime      @default(now())
+  used         Boolean
+  gameSessions GameSession[]
 }
 
-model UserCompany {
-  userId    String
-  companyId String
-  role      String
-  company   Company @relation(fields: [companyId], references: [id])
-  user      User    @relation(fields: [userId], references: [id])
-
-  @@id([userId, companyId])
+model GameSession {
+  id         String   @id @unique @default(uuid())
+  startedAt  DateTime @default(now())
+  finishAt   DateTime
+  game       Game     @relation(fields: [gameId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+  code       Code     @relation(fields: [codeId], references: [id])
+  score      Int
+  hasCounter Boolean
+  teamName   String
+  gameId     String
+  userId     String
+  codeId     String
 }
 
-model Availability {
-  id          String                  @id @unique @default(uuid())
-  companyId   String
-  day         String
-  start       String
-  end         String
-  status      String                  @default("AVALIABLE")
-  appointment Appointment?
-  companies   CompanyAvaliabilities[]
+model Question {
+  id         String   @id @unique @default(uuid())
+  title      String
+  images     String[]
+  type       String
+  answer     String
+  score      Int
+  order      Int?
+  mapPoint   mapPoint @relation(fields: [mapPointId], references: [id])
+  mapPointId String
+  game       Game?    @relation(fields: [gameId], references: [id])
+  gameId     String?
 }
 
-model CompanyAvaliabilities {
-  companyId      String
-  availabilityId String
-  avaliability   Availability @relation(fields: [availabilityId], references: [id])
-  company        Company      @relation(fields: [companyId], references: [id])
-
-  @@id([companyId, availabilityId])
+model mapPoint {
+  id             String     @id @unique @default(uuid())
+  name           String?
+  latitude       Float
+  longitude      Float
+  games          Game[]
+  startingPoints Game[]     @relation("StartingPoint")
+  endingPoints   Game[]     @relation("EndingPoint")
+  Question       Question[]
 }
 
-model Appointment {
-  id             String       @id @unique @default(uuid())
-  availabilityId String       @unique
-  customerEmail  String
-  customerNumber String
-  customerPhone  String
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime?    @updatedAt
-  avaliability   Availability @relation(fields: [availabilityId], references: [id])
+model Game {
+  id               String        @id @unique @default(uuid())
+  title            String
+  description      String?
+  images           String[]
+  price            Int?
+  gameSessions     GameSession[]
+  author           User          @relation(fields: [authorId], references: [id])
+  authorId         String
+  quests           Question[]
+  duration         Int?
+  distance         Int?
+  steps            Int?
+  earnings         Int           @default(0)
+  isPublished      Boolean       @default(false)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  startingPoint    mapPoint?     @relation("StartingPoint", fields: [startingPointId], references: [id])
+  endingPoint      mapPoint?     @relation("EndingPoint", fields: [endingPointId], references: [id])
+  startingPointId  String?
+  endingPointId    String?
+  pointsOfInterest mapPoint[]
+  city             City          @relation(fields: [cityId], references: [id])
+  cityId           String
 }

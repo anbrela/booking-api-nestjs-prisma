@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Patch,
+  Put,
   Res,
   SetMetadata,
   UnauthorizedException,
@@ -15,10 +16,11 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ApiCookieAuth, ApiTags } from '@nestjs/swagger';
 import { GetToken, TokenCookieType } from './get-token.decorator';
-import { User } from '@prisma/client';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { RoleGuard } from './role/role.guard';
 import { AuthGuard } from '@nestjs/passport';
+import { updateProfileDto } from './dto/updateProfile.dto';
+import { User } from '@prisma/client';
 
 @ApiCookieAuth()
 @Controller()
@@ -26,17 +28,22 @@ import { AuthGuard } from '@nestjs/passport';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @Post('/signup')
+  @Post('/auth/signup')
   async signUp(@Body() registerDto: RegisterDto) {
     return this.authService.signUp(registerDto);
   }
 
-  @Get('/users')
+  @Get('/auth')
   async getAllUsers(): Promise<User[]> {
     return this.authService.getAllUsers();
   }
 
-  @Post('/refresh')
+  @Post('/auth/find')
+  async findUserByEmail(@Body() email: string): Promise<void> {
+    return this.authService.findUserByEmail(email);
+  }
+
+  @Post('/auth/refresh')
   async refresh(
     @Res({ passthrough: true }) response: any,
     @GetToken() token: TokenCookieType,
@@ -48,7 +55,7 @@ export class AuthController {
     return this.authService.refresh(token, response);
   }
 
-  @Post('/signin')
+  @Post('/auth/signin')
   async signIn(
     @GetToken() token: TokenCookieType,
     @Body() loginDto: LoginDto,
@@ -57,11 +64,18 @@ export class AuthController {
     return this.authService.signIn(res, token, loginDto);
   }
 
-  //update user
+  @Put('/auth/update')
+  async updateProfile(
+    @GetToken() token: TokenCookieType,
+    @Body() profileDto: updateProfileDto,
+  ): Promise<void> {
+    return this.authService.updateProfile(token, profileDto);
+  }
 
+  //update user
   @UseGuards(AuthGuard(), RoleGuard)
   @SetMetadata('roles', ['ADMINISTRATOR'])
-  @Patch('/:id')
+  @Patch('/auth/:id')
   async updateUserRole(
     @Param('id') id: string,
     @Body() updateUserRoleDto: UpdateUserRoleDto,

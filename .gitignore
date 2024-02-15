@@ -14,6 +14,9 @@ lerna-debug.log*
 # OS
 .DS_Store
 
+#postgresql
+./data
+
 # Tests
 /coverage
 /.nyc_output
@@ -33,3 +36,4 @@ lerna-debug.log*
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+/data/

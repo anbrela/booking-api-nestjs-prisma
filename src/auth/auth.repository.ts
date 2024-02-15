@@ -1,9 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
 import { PrismaService } from '../prisma/prisma.service';
 
 import { User } from '@prisma/client';
-import { RolesIds } from '../shared/types/roles';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 
 @Injectable()
@@ -18,11 +17,9 @@ export class AuthRepository {
       data: {
         ...registerDto,
         roles: {
-          create: [
-            {
-              roleId: RolesIds.USER,
-            },
-          ],
+          connect: {
+            role: 'USER',
+          },
         },
       },
     });
@@ -43,6 +40,19 @@ export class AuthRepository {
     });
   }
 
+  async updateProfile(email: string, profileDto: any): Promise<void> {
+    try {
+      await this.prisma.user.update({
+        where: { email },
+        data: {
+          ...profileDto,
+        },
+      });
+    } catch (e) {
+      throw new ConflictException('Error desconocido');
+    }
+  }
+
   async updateUserRole(
     id: string,
     updateUserRoleDto: UpdateUserRoleDto,
@@ -58,17 +68,7 @@ export class AuthRepository {
       where: { id },
       data: {
         roles: {
-          deleteMany: {},
-          create: formattedRoles.map((role) => ({
-            roleId: role.id,
-          })),
-        },
-      },
-      include: {
-        roles: {
-          select: {
-            role: true,
-          },
+          connect: formattedRoles.map((role) => ({ role: role.role })),
         },
       },
     });
